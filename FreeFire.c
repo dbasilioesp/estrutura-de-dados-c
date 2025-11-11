@@ -12,21 +12,27 @@
 #define MAX_NOME_LENGTH 20
 #define MAX_TIPO_LENGTH 20
 
-typedef struct {
+typedef struct
+{
     char nome[MAX_NOME_LENGTH];
     char tipo[MAX_TIPO_LENGTH];
     int quantidade;
 } Item;
 
-void exibirMenu(int* opcao);
+void exibirMenu(int *opcao);
 void limparTela();
 void limparBufferEntrada();
 void digiteParaContinuar();
-void inserirItem(Item* mochila, int* quantidade);
-void listarItens(Item* mochila, int* quantidade);
-void removerItem(Item* mochila, int* quantidade);
+void inserirItem(Item *mochila, int *quantidade);
+void listarItens(Item *mochila, int *quantidade);
+void opcaoRemoverItem(Item *mochila, int *quantidade);
+// void removerItem(Item *mochila, int *quantidade, char *procurado[MAX_NOME_LENGTH]);
+void removerItem(Item *mochila, int *quantidade, char *procurado);
+int buscaPorNome(Item *mochila[], int quantidade, char *valor);
+void opcaoBuscarPorNome(Item *mochila, int *quantidade);
 
-int main() {
+int main()
+{
     // Menu principal com opções:
     // 1. Adicionar um item
     // 2. Remover um item
@@ -37,19 +43,31 @@ int main() {
 
     int opcao = 0;
     int numItens = 0;
-    Item* mochila = (Item*)malloc((MAX_ITEMS) * sizeof(Item));
+    Item *mochila = (Item *)malloc((MAX_ITEMS) * sizeof(Item));
 
-    do {
+    do
+    {
         exibirMenu(&opcao);
         limparTela();
 
-        switch(opcao) {
-            case 1: inserirItem(mochila, &numItens); break;
-            case 2: removerItem(mochila, &numItens); break;
-            case 3: listarItens(mochila, &numItens); break;
-            default: break;
+        switch (opcao)
+        {
+        case 1:
+            inserirItem(mochila, &numItens);
+            break;
+        case 2:
+            opcaoRemoverItem(mochila, &numItens);
+            break;
+        case 3:
+            listarItens(mochila, &numItens);
+            break;
+        case 4:
+            opcaoBuscarPorNome(mochila, &numItens);
+            break;
+        default:
+            break;
         }
-    } while(opcao != 0);
+    } while (opcao != 0);
 
     // A estrutura switch trata cada opção chamando a função correspondente.
     // A ordenação e busca binária exigem que os dados estejam bem organizados.
@@ -57,13 +75,21 @@ int main() {
     return 0;
 }
 
+void limparTela()
+{
+    printf("\n\n");
+    printf("====================");
+    printf("\n\n");
+}
 
-
-void exibirMenu(int* opcao) {
+void exibirMenu(int *opcao)
+{
+    limparTela();
     printf("Menu principal com opções:\n");
     printf("1. Adicionar um item\n");
     printf("2. Remover um item\n");
     printf("3. Listar todos os itens\n");
+    printf("4. Buscar item por nome\n");
     printf("0. Sair\n\n");
 
     printf("Digite a opção: ");
@@ -71,28 +97,30 @@ void exibirMenu(int* opcao) {
     limparBufferEntrada();
 }
 
-void limparTela() {
-    printf("\n\n\n\n");
-}
-
-void limparBufferEntrada() {
+void limparBufferEntrada()
+{
     int c;
-    while((c = getchar()) != '\n' && c != EOF);
+    while ((c = getchar()) != '\n' && c != EOF)
+        ;
 }
 
-void digiteParaContinuar() {
+void digiteParaContinuar()
+{
     printf("\nPressione Enter para continuar...");
-    while (getchar() != '\n');
+    while (getchar() != '\n')
+        ;
 }
 
-void inserirItem(Item* mochila, int* index) {
-    if (*index >= MAX_ITEMS) {
+void inserirItem(Item *mochila, int *index)
+{
+    if (*index >= MAX_ITEMS)
+    {
         printf("----- Não há espaço na mochila! ------\n");
         return;
     }
 
     printf(">>> Adicionando novo item\n");
-    
+
     printf("Nome: ");
     fgets(mochila[*index].nome, MAX_NOME_LENGTH, stdin);
 
@@ -108,48 +136,96 @@ void inserirItem(Item* mochila, int* index) {
     *index = *index + 1;
 }
 
-void listarItens(Item* mochila, int* quantidade) {
+void printItem(Item *item, int pos)
+{
+    printf("%d - %s [%s] (Qt. %d)\n", pos, item->nome, item->tipo, item->quantidade);
+}
+
+void listarItens(Item *mochila, int *quantidade)
+{
     printf(">>> Lista de itens da mochila:\n");
 
-    for (int i = 0; i < *quantidade; i++) {
-        printf("%d - %s [%s] (Qt. %d)\n", i + 1, mochila[i].nome, mochila[i].tipo, mochila[i].quantidade);
+    for (int i = 0; i < *quantidade; i++)
+    {
+        printItem(&mochila[i], i + 1);
     }
 
     digiteParaContinuar();
 }
 
-void removerItem(Item* mochila, int* quantidade) {
+void informeNome(char *procurado)
+{
+    printf("Informe o nome do item: ");
+    fgets(procurado, MAX_NOME_LENGTH, stdin);
+    procurado[strcspn(procurado, "\n")] = '\0';
+}
+
+void opcaoRemoverItem(Item *mochila, int *quantidade)
+{
     printf(">>> Removendo item da mochila:\n");
 
     int pos;
     char procurado[MAX_NOME_LENGTH];
+    informeNome(procurado);
 
-    printf("Informe o nome do item: ");
-    fgets(procurado, MAX_NOME_LENGTH, stdin);
-    procurado[strcspn(procurado, "\n")] = '\0';
+    removerItem(mochila, quantidade, procurado);
 
-    for (int i = 0; i < *quantidade; i++) {
-        if (strcmp(mochila[i].nome, procurado) == 0) {
-            pos = i;
-            break;
-        }
-    }
+    printf(">>> Item removido!");
+    digiteParaContinuar();
+}
 
-    if (pos == -1) {
+void removerItem(Item *mochila, int *quantidade, char *procurado)
+{
+    int pos = buscaPorNome(&mochila, *quantidade, procurado);
+
+    if (pos == -1)
+    {
         printf(">>> Item não encontrado! \n");
         return;
     }
 
-    for (int i = pos; i < *quantidade; i++) {
+    for (int i = pos; i < *quantidade; i++)
+    {
         strcpy(mochila[i].nome, mochila[i + 1].nome);
         strcpy(mochila[i].tipo, mochila[i + 1].tipo);
         mochila[i].quantidade = mochila[i + 1].quantidade;
     }
 
     *quantidade -= 1;
+}
 
-    printf(">>> Item removido!");
+void opcaoBuscarPorNome(Item *mochila, int *quantidade)
+{
+    char procurado[MAX_NOME_LENGTH];
+    informeNome(procurado);
+
+    int pos = buscaPorNome(&mochila, *quantidade, procurado);
+
+    limparTela();
+
+    if (pos >= 0)
+    {
+        printf(">>>> ITEM ENCONTRADO!");
+        printItem(&mochila[pos], pos + 1);
+    }
+    else
+    {
+        printf(">>>> Não foi encontrdo o item. <<<<");
+    }
+
     digiteParaContinuar();
+}
+
+int buscaPorNome(Item *mochila[], int quantidade, char *valor)
+{
+    for (int i = 0; i < quantidade; i++)
+    {
+        if (strcmp(mochila[i]->nome, valor) == 0)
+        {
+            return i; // Retorna o índice onde encontrou o valor
+        }
+    }
+    return -1; // Retorna -1 se não encontrou
 }
 
 // Struct Item:
