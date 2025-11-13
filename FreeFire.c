@@ -17,40 +17,49 @@ typedef struct
     char nome[MAX_NOME_LENGTH];
     char tipo[MAX_TIPO_LENGTH];
     int quantidade;
+    int prioridade;
 } Item;
 
-void exibirMenu(int *opcao);
+void menuPrincipal(int *opcao);
 void limparTela();
 void limparBufferEntrada();
 void digiteParaContinuar();
-void inserirItem(Item *mochila, int *quantidade);
-void listarItens(Item *mochila, int *quantidade);
+void inserirItem(Item mochila[], int *quantidade);
+void listarItens(Item mochila[], int *quantidade);
 void opcaoRemoverItem(Item *mochila, int *quantidade);
 // void removerItem(Item *mochila, int *quantidade, char *procurado[MAX_NOME_LENGTH]);
-void removerItem(Item *mochila, int *quantidade, char *procurado);
-int buscaPorNome(Item *mochila[], int quantidade, char *valor);
-void opcaoBuscarPorNome(Item *mochila, int *quantidade);
+void removerItem(Item mochila[], int *quantidade, char *procurado);
+int buscaPorNome(Item mochila[], int quantidade, char *valor);
+int buscaBinariaPorNome(Item mochila[], int tamanho, char *valor);
+void opcaoBuscarPorNome(Item mochila[], int *quantidade, bool binaria);
+void opcaoOrdenacao(Item mochila[], int *quantidade);
+void ordenarPorNomeBubble(Item mochila[], int tamanho);
+void ordenarPorTipoBubble(Item mochila[], int tamanho);
+void ordenarPorPrioridadeBubble(Item mochila[], int tamanho);
+void ordenarPorNomeInsertionSort(Item mochila[], int tamanho);
+void ordenarPorTipoInsertionSort(Item mochila[], int tamanho);
+void ordenarPorPrioridadeInsertionSort(Item mochila[], int tamanho);
+void listarItens(Item mochila[], int *quantidade);
 
 int main()
 {
-    // Menu principal com opções:
-    // 1. Adicionar um item
-    // 2. Remover um item
-    // 3. Listar todos os itens
-    // 4. Ordenar os itens por critério (nome, tipo, prioridade)
-    // 5. Realizar busca binária por nome
-    // 0. Sair
+    int opcaoPrincipal = 0;
+    // int numItens = 0;
+    // Item *mochila = (Item *)malloc((MAX_ITEMS) * sizeof(Item));
 
-    int opcao = 0;
-    int numItens = 0;
-    Item *mochila = (Item *)malloc((MAX_ITEMS) * sizeof(Item));
+    int numItens = 3;
+    Item mochila[MAX_ITEMS] = {
+        {"Soo", "Arma", 1, 3},
+        {"Boo", "Escudo", 1, 2},
+        {"Doo", "Cura", 1, 4},
+    };
 
     do
     {
-        exibirMenu(&opcao);
+        menuPrincipal(&opcaoPrincipal);
         limparTela();
 
-        switch (opcao)
+        switch (opcaoPrincipal)
         {
         case 1:
             inserirItem(mochila, &numItens);
@@ -62,12 +71,18 @@ int main()
             listarItens(mochila, &numItens);
             break;
         case 4:
-            opcaoBuscarPorNome(mochila, &numItens);
+            opcaoBuscarPorNome(mochila, &numItens, false);
+            break;
+        case 5:
+            opcaoOrdenacao(mochila, &numItens);
+            break;
+        case 6:
+            opcaoBuscarPorNome(mochila, &numItens, true);
             break;
         default:
             break;
         }
-    } while (opcao != 0);
+    } while (opcaoPrincipal != 0);
 
     // A estrutura switch trata cada opção chamando a função correspondente.
     // A ordenação e busca binária exigem que os dados estejam bem organizados.
@@ -82,7 +97,7 @@ void limparTela()
     printf("\n\n");
 }
 
-void exibirMenu(int *opcao)
+void menuPrincipal(int *opcao)
 {
     limparTela();
     printf("Menu principal com opções:\n");
@@ -90,11 +105,71 @@ void exibirMenu(int *opcao)
     printf("2. Remover um item\n");
     printf("3. Listar todos os itens\n");
     printf("4. Buscar item por nome\n");
+    printf("5. Ordenar items\n");
+    printf("6. Busca Binaria por nome\n");
     printf("0. Sair\n\n");
 
     printf("Digite a opção: ");
     scanf("%d", opcao);
     limparBufferEntrada();
+}
+
+void menuOrdenacao(int *opcao)
+{
+    limparTela();
+    printf("Opções de ordenação:\n");
+    printf("1. Ordenar por nome (Bubble)\n");
+    printf("2. Ordenar por tipo (Bubble)\n");
+    printf("3. Ordenar por prioridade (Bubble)\n");
+    printf("4. Ordenar por nome (InsertionSort)\n");
+    printf("5. Ordenar por tipo (InsertionSort)\n");
+    printf("6. Ordenar por prioridade (InsertionSort)\n");
+    printf("0. Voltar\n\n");
+
+    printf("Digite a opção: ");
+    scanf("%d", opcao);
+    limparBufferEntrada();
+}
+
+void opcaoOrdenacao(Item *mochila, int *quantidade)
+{
+    int opcaoOrdenacao = 0;
+
+    do
+    {
+        menuOrdenacao(&opcaoOrdenacao);
+
+        switch (opcaoOrdenacao)
+        {
+        case 1:
+            ordenarPorNomeBubble(mochila, *quantidade);
+            break;
+        case 2:
+            ordenarPorTipoBubble(mochila, *quantidade);
+            break;
+        case 3:
+            ordenarPorPrioridadeBubble(mochila, *quantidade);
+            break;
+        case 4:
+            ordenarPorNomeInsertionSort(mochila, *quantidade);
+            break;
+        case 5:
+            ordenarPorTipoInsertionSort(mochila, *quantidade);
+            break;
+        case 6:
+            ordenarPorPrioridadeInsertionSort(mochila, *quantidade);
+            break;
+        default:
+            break;
+        }
+
+        if (opcaoOrdenacao != 0)
+        {
+            printf(">>> Ordenado!\n\n");
+            listarItens(mochila, quantidade);
+        }
+
+    } while (opcaoOrdenacao != 0);
 }
 
 void limparBufferEntrada()
@@ -111,7 +186,7 @@ void digiteParaContinuar()
         ;
 }
 
-void inserirItem(Item *mochila, int *index)
+void inserirItem(Item mochila[], int *index)
 {
     if (*index >= MAX_ITEMS)
     {
@@ -130,6 +205,9 @@ void inserirItem(Item *mochila, int *index)
     printf("Quantidade: ");
     scanf("%d", &mochila[*index].quantidade);
 
+    printf("Prioridade: ");
+    scanf("%d", &mochila[*index].prioridade);
+
     mochila[*index].nome[strcspn(mochila[*index].nome, "\n")] = '\0';
     mochila[*index].tipo[strcspn(mochila[*index].tipo, "\n")] = '\0';
 
@@ -138,10 +216,10 @@ void inserirItem(Item *mochila, int *index)
 
 void printItem(Item *item, int pos)
 {
-    printf("%d - %s [%s] (Qt. %d)\n", pos, item->nome, item->tipo, item->quantidade);
+    printf("%d - %s [%s] (Qt. %d) (Prioridade %d)\n", pos, item->nome, item->tipo, item->quantidade, item->prioridade);
 }
 
-void listarItens(Item *mochila, int *quantidade)
+void listarItens(Item mochila[], int *quantidade)
 {
     printf(">>> Lista de itens da mochila:\n");
 
@@ -160,7 +238,7 @@ void informeNome(char *procurado)
     procurado[strcspn(procurado, "\n")] = '\0';
 }
 
-void opcaoRemoverItem(Item *mochila, int *quantidade)
+void opcaoRemoverItem(Item mochila[], int *quantidade)
 {
     printf(">>> Removendo item da mochila:\n");
 
@@ -174,9 +252,9 @@ void opcaoRemoverItem(Item *mochila, int *quantidade)
     digiteParaContinuar();
 }
 
-void removerItem(Item *mochila, int *quantidade, char *procurado)
+void removerItem(Item mochila[], int *quantidade, char *procurado)
 {
-    int pos = buscaPorNome(&mochila, *quantidade, procurado);
+    int pos = buscaPorNome(mochila, *quantidade, procurado);
 
     if (pos == -1)
     {
@@ -194,12 +272,20 @@ void removerItem(Item *mochila, int *quantidade, char *procurado)
     *quantidade -= 1;
 }
 
-void opcaoBuscarPorNome(Item *mochila, int *quantidade)
+void opcaoBuscarPorNome(Item mochila[], int *quantidade, bool binaria)
 {
+    int pos;
     char procurado[MAX_NOME_LENGTH];
     informeNome(procurado);
 
-    int pos = buscaPorNome(&mochila, *quantidade, procurado);
+    if (binaria)
+    {
+        pos = buscaPorNome(mochila, *quantidade, procurado);
+    }
+    else
+    {
+        pos = buscaBinariaPorNome(mochila, *quantidade, procurado);
+    }
 
     limparTela();
 
@@ -216,16 +302,155 @@ void opcaoBuscarPorNome(Item *mochila, int *quantidade)
     digiteParaContinuar();
 }
 
-int buscaPorNome(Item *mochila[], int quantidade, char *valor)
+int buscaPorNome(Item mochila[], int quantidade, char *valor)
 {
     for (int i = 0; i < quantidade; i++)
     {
-        if (strcmp(mochila[i]->nome, valor) == 0)
+        if (strcmp(mochila[i].nome, valor) == 0)
         {
             return i; // Retorna o índice onde encontrou o valor
         }
     }
     return -1; // Retorna -1 se não encontrou
+}
+
+int buscaBinariaPorNome(Item mochila[], int tamanho, char *valor)
+{
+    int iteracoes = 0;
+    int inicio = 0;
+    int fim = tamanho - 1;
+
+    while (inicio <= fim)
+    {
+        int meio = (inicio + fim) / 2;
+        int cmp = strcmp(mochila[meio].nome, valor);
+
+        if (cmp == 0)
+        {
+            printf("Iterações: %d\n", iteracoes);
+            return meio;
+        }
+        else if (cmp < valor)
+        {
+
+            inicio = meio + 1;
+        }
+        else
+        {
+
+            fim = meio - 1;
+        }
+
+        iteracoes++;
+    }
+}
+
+void trocarItem(Item *a, Item *b)
+{
+    Item temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+void ordenarPorNomeBubble(Item mochila[], int tamanho)
+{
+    for (int i = 0; i < tamanho - 1; i++)
+    {
+        for (int j = 0; j < tamanho - i - 1; j++)
+        {
+            if (strcmp(mochila[j].nome, mochila[j + 1].nome) > 0)
+            {
+                trocarItem(&mochila[j], &mochila[j + 1]);
+            }
+        }
+    }
+}
+
+void ordenarPorTipoBubble(Item mochila[], int tamanho)
+{
+    for (int i = 0; i < tamanho - 1; i++)
+    {
+        for (int j = 0; j < tamanho - i - 1; j++)
+        {
+            if (strcmp(mochila[j].tipo, mochila[j + 1].tipo) > 0)
+            {
+                trocarItem(&mochila[j], &mochila[j + 1]);
+            }
+        }
+    }
+}
+
+void ordenarPorPrioridadeBubble(Item mochila[], int tamanho)
+{
+    for (int i = 0; i < tamanho - 1; i++)
+    {
+        for (int j = 0; j < tamanho - i - 1; j++)
+        {
+            if (mochila[j].prioridade > mochila[j + 1].prioridade)
+            {
+                trocarItem(&mochila[j], &mochila[j + 1]);
+            }
+        }
+    }
+}
+
+void ordenarPorNomeInsertionSort(Item mochila[], int tamanho)
+{
+    for (int i = 1; i < tamanho; i++)
+    {
+        int ant = i - 1;
+        char valor2[MAX_NOME_LENGTH];
+        Item temp = mochila[i];
+        strcpy(valor2, mochila[i].nome);
+
+        // Move os elementos maiores que a valor2 uma posição à frente
+        while (ant >= 0 && strcmp(mochila[ant].nome, valor2) > 0)
+        {
+            mochila[ant + 1] = mochila[ant];
+            ant--;
+        }
+
+        mochila[ant + 1] = temp;
+    }
+}
+
+void ordenarPorTipoInsertionSort(Item mochila[], int tamanho)
+{
+    for (int i = 1; i < tamanho; i++)
+    {
+        int ant = i - 1;
+        char valor2[MAX_NOME_LENGTH];
+        Item temp = mochila[i];
+        strcpy(valor2, mochila[i].tipo);
+
+        // Move os elementos maiores que a valor2 uma posição à frente
+        while (ant >= 0 && strcmp(mochila[ant].tipo, valor2) > 0)
+        {
+            mochila[ant + 1] = mochila[ant];
+            ant--;
+        }
+
+        mochila[ant + 1] = temp;
+    }
+}
+
+void ordenarPorPrioridadeInsertionSort(Item mochila[], int tamanho)
+{
+    for (int i = 1; i < tamanho; i++)
+    {
+        Item temp = mochila[i];
+        int ant = i - 1;
+        int valor2 = mochila[i].prioridade;
+
+        // Move os elementos maiores que a valor2 uma posição à frente
+        while (ant >= 0 && mochila[ant].prioridade > valor2)
+        {
+            mochila[ant + 1] = mochila[ant];
+            ant--;
+        }
+
+        mochila[ant + 1] = temp;
+    }
 }
 
 // Struct Item:
@@ -242,7 +467,7 @@ int buscaPorNome(Item *mochila[], int quantidade, char *valor)
 // limparTela():
 // Simula a limpeza da tela imprimindo várias linhas em branco.
 
-// exibirMenu():
+// menuPrincipal():
 // Apresenta o menu principal ao jogador, com destaque para status da ordenação.
 
 // inserirItem():
