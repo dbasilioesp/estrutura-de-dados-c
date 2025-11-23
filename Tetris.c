@@ -9,6 +9,7 @@
 // Use as instruções de cada nível para desenvolver o desafio.
 
 #define MAX_PECAS 5
+#define MAX_RESERVAS 3
 #define MAX_TIPO_PECAS 4
 
 typedef enum
@@ -33,6 +34,12 @@ typedef struct
     int total;
 } Fila;
 
+typedef struct
+{
+    int topo;
+    Peca pecas[MAX_RESERVAS];
+} Pilha;
+
 void inicializarFila(Fila *f);
 void inserirFila(Fila *f, Peca e);
 Peca retirarFila(Fila *f);
@@ -42,9 +49,18 @@ int filaCheia(Fila *f);
 int filaVazia(Fila *f);
 Peca gerarPeca();
 
+void inserirPilha(Pilha *p, Peca e);
+void retirarPilha(Pilha *p, Peca *e);
+void inicializarPilha(Pilha *p);
+int pilhaVazia(Pilha *p);
+int pilhaCheia(Pilha *p);
+void mostrarPilha(Pilha *p);
+
 void menuPrincipal(int *opcao);
 void opcaoAdicionarPeca(Fila *fila);
 void opcaoJogarPeca(Fila *fila);
+void opcaoReservarPeca(Fila *fila, Pilha *pilha);
+void opcaoUsarReserva(Pilha *pilha);
 
 int main()
 {
@@ -53,6 +69,9 @@ int main()
 
     Fila fila;
     inicializarFila(&fila);
+
+    Pilha pilha;
+    inicializarPilha(&pilha);
 
     mostrarFila(&fila);
 
@@ -64,6 +83,12 @@ int main()
         {
         case 1:
             opcaoJogarPeca(&fila);
+            break;
+        case 2:
+            opcaoReservarPeca(&fila, &pilha);
+            break;
+        case 3:
+            opcaoUsarReserva(&pilha);
             break;
         default:
             break;
@@ -141,36 +166,14 @@ void menuPrincipal(int *opcao)
     limparTela();
     printf("Menu principal com opções:\n");
     printf("1. Jogar a peça\n");
+    printf("2. Enviar peça da fila para a reserva\n");
+    printf("3. Usar peça da reserva\n");
     printf("0. Sair\n\n");
 
     printf("Digite a opção: ");
     scanf("%d", opcao);
     limparBufferEntrada();
     limparTela();
-}
-
-void opcaoAdicionarPeca(Fila *fila)
-{
-
-    if (filaCheia(fila))
-    {
-        printf("Fila está cheia, é preciso jogar uma peça!");
-        return;
-    }
-
-    Peca peca;
-    peca.id = 1;
-    printf("Adicione um dos tipos de peças: [L] [O] [I] [T]\n");
-
-    printf("Informe o nome do item: ");
-    scanf("%c", &peca.tipo);
-    limparBufferEntrada();
-    inserirFila(fila, peca);
-
-    printf("\n");
-    mostrarFila(fila);
-
-    digiteParaContinuar();
 }
 
 void opcaoJogarPeca(Fila *fila)
@@ -194,6 +197,48 @@ void opcaoJogarPeca(Fila *fila)
 
     mostrarFila(fila);
 
+    digiteParaContinuar();
+}
+
+void opcaoReservarPeca(Fila *fila, Pilha *pilha)
+{
+    if (pilhaCheia(pilha))
+    {
+        printf("Reserva cheia!\n");
+        digiteParaContinuar();
+        return;
+    }
+
+    Peca peca = retirarFila(fila);
+    inserirPilha(pilha, peca);
+
+    Peca nova = gerarPeca();
+    inserirFila(fila, nova);
+
+    printf("Peça reservada: [%c]\n", peca.tipo);
+    printf("Peça gerada: [%c]\n\n", nova.tipo);
+
+    mostrarFila(fila);
+    mostrarPilha(pilha);
+
+    digiteParaContinuar();
+}
+
+void opcaoUsarReserva(Pilha *pilha)
+{
+    if (pilhaVazia(pilha))
+    {
+        printf("Reserva vazia!\n");
+        digiteParaContinuar();
+        return;
+    }
+
+    Peca peca;
+    retirarPilha(pilha, &peca);
+
+    printf("Peca jogada da reserva: [%c]\n\n", peca.tipo);
+
+    mostrarPilha(pilha);
     digiteParaContinuar();
 }
 
@@ -282,4 +327,56 @@ Peca retirarFila(Fila *f)
     f->inicio = (f->inicio + 1) % MAX_PECAS;
     f->total--;
     return e;
+}
+
+// PILHA
+
+void inicializarPilha(Pilha *p)
+{
+    p->topo = -1;
+}
+
+int pilhaVazia(Pilha *p)
+{
+    return p->topo == -1;
+}
+
+int pilhaCheia(Pilha *p)
+{
+    return p->topo == MAX_RESERVAS - 1;
+}
+
+void inserirPilha(Pilha *p, Peca e)
+{
+    if (pilhaCheia(p))
+    {
+        printf("Erro: pilha cheia. Não é possível inserir.\n");
+        return;
+    }
+
+    p->topo++;
+    p->pecas[p->topo] = e;
+}
+
+void retirarPilha(Pilha *p, Peca *e)
+{
+    if (pilhaVazia(p))
+    {
+        printf("Erro: pilha vazia. Não há elementos para remover.");
+        e->tipo = ' ';
+        return;
+    }
+
+    *e = p->pecas[p->topo];
+    p->topo--;
+}
+
+void mostrarPilha(Pilha *p)
+{
+    printf("Pilha: ");
+    for (int i = p->topo; i >= 0; i--)
+    {
+        printf("[%c] ", p->pecas[i].tipo);
+    }
+    printf("\n");
 }
